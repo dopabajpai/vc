@@ -19,59 +19,57 @@
                 <video id="friendsvideo" class="vid" autoplay></video>
             </div>
             <textarea id="offer-sdp" placeholder="Offer" cols="50" rows="7"></textarea>
-            <button onclick="generateOffer()"> Generate Offer</button>
+            <button onclick="generateOffer()">Generate Offer</button>
             <textarea id="answer-sdp" placeholder="Answer" cols="50" rows="7"></textarea>
             <button onclick="createAnswer()">Answer</button>
-            <button onclick="addAnswer()">add answer</button>
+            <button onclick="addAnswer()">Add Answer</button>
         </div>
     </div>
     <script>
         let peerConnection = new RTCPeerConnection({
-            iceServers :[
-                {urls:'stun.stun.1.google.com:19302'},
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
             ]
         });
         let localStream;
         let remoteStream;
 
-        const init = ()=>{
-            navigator.mediaDevices.getUserMedia({video:true,audio:false})
-            .then((stream)=>{
-                localStream=stream;
+        const init = () => {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then((stream) => {
+                localStream = stream;
                 remoteStream = new MediaStream();
-                document.getElementById('myvideo').srcObject=localStream;
+                document.getElementById('myvideo').srcObject = localStream;
                 document.getElementById('friendsvideo').srcObject = remoteStream;
 
-                localStream.getTracks().forEach((track)=>{
-                    peerConnection.addTrack(track,localStream);
+                localStream.getTracks().forEach((track) => {
+                    peerConnection.addTrack(track, localStream);
                 });
 
-                peerConnection.ontrack = (event)=>{
-                    event.streams[0].getTracks().forEach((track)=>{
-                        remote.Stream.addTrack(track);
+                peerConnection.ontrack = (event) => {
+                    event.streams[0].getTracks().forEach((track) => {
+                        remoteStream.addTrack(track);
                     });
                 };
             })
-            .catch((err)=>{
-                console.log('Error accessing user media',err);
-            })
+            .catch((err) => {
+                console.log('Error accessing user media', err);
+            });
         };
-        
 
-        const generateOffer= ()=>{
+        const generateOffer = () => {
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
                     document.getElementById('offer-sdp').value = JSON.stringify(peerConnection.localDescription);
                 }
             };
 
-            peerConnection.generateOffer()
+            peerConnection.createOffer()
                 .then((offer) => peerConnection.setLocalDescription(offer))
                 .catch((error) => console.error('Error creating offer:', error));
-        }
+        };
 
-
-        let createAnswer = () => {
+        const createAnswer = () => {
             let offer = JSON.parse(document.getElementById('offer-sdp').value);
 
             peerConnection.onicecandidate = (event) => {
@@ -87,17 +85,16 @@
                 .catch((error) => console.error('Error creating answer:', error));
         };
 
-        let addAnswer = () => {
+        const addAnswer = () => {
             console.log('Add answer triggered');
             let answer = JSON.parse(document.getElementById('answer-sdp').value);
             console.log('answer:', answer);
 
-            if (!peerConnection.currentRemoteDescription) {
+            if (peerConnection.remoteDescription === null) {
                 peerConnection.setRemoteDescription(answer)
                     .catch((error) => console.error('Error adding answer:', error));
             }
         };
-
     </script>
 </body>
 </html>
